@@ -105,7 +105,7 @@ if ($action eq 'whatsnew')
 
 } elsif ($action eq 'supplierproc') {
    &supplierproc;
-   
+
 } elsif ($query->url_param('action') eq 'supplierportal') {
    &supplierportal;
 
@@ -133,20 +133,20 @@ exit;
 
 sub start_page {
    my %args = ();
-   
+
    if(@_ == 1) {
 	  $args{-title} = shift;
    } else {
 	  %args = (@_);
    }
-   
+
    $args{-title} ||= '';
    if($args{-script}) {
 	  $args{-script} = "<script type=\"text/javascript\" src=\"" . $args{-script}{-src} . "\"></script>";
    } else {
 	  $args{-script} = '';
    }
-   
+
    my $s = qq|
    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 	  <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
@@ -157,7 +157,7 @@ sub start_page {
 		<link rel="stylesheet" type="text/css" href="/css/global.css" media="all" />
 	  </head>
 	  <body>|;
-   
+
    return $s . "@header";
 }
 
@@ -315,14 +315,14 @@ sub adminportal
 	### Connect to the SQL Database ###
 	my $dbh = DBI->connect("DBI:mysql:database=badstoredb;host=localhost", "root", "secret",{'RaiseError' => 1})
 	or die "Cannot connect: " . $DBI::errstr;
-	
+
 		### Prepare the Sales Report ###
 		if ($aquery eq 'View Sales Reports') {
 		my $sth = $dbh->prepare("SELECT * FROM orderdb ORDER BY 'orderdate','ordertime'")
 			or die "Couldn't prepare statement: " . $dbh->errstr;
 		$sth->execute() or die "Couldn't execute SQL statement: " .$sth->errstr;
 
-		print h2("<Center>BadStore.net Sales Report",p,&getdate,"</center>"), 
+		print h2("<Center>BadStore.net Sales Report",p,&getdate,"</center>"),
 		"<TABLE BORDER=1>",
 		Tr(th('Date'),th('Time'),th('Cost'),th('Count'),th('Items'),th('Account'),th('IP'),th('Paid'),th('Credit_Card_Used'),th('ExpDate'));
 		while (@data=$sth->fetchrow_array()){
@@ -346,7 +346,7 @@ sub adminportal
 			p, "Reset password for: ",
 			popup_menu(-name=>'email', -values=>[@ids]),
 			submit(-name=>'DoMods',-value=>'Reset User Password'), end_form;
-	
+
 			### Close statement handles ###
 			$sth->finish;
 
@@ -358,7 +358,7 @@ sub adminportal
 			my %env_info = (
 		  	    SERVER_SOFTWARE     => "the server software",
 			    SERVER_NAME         => "the server hostname or IP address",
-			    GATEWAY_INTERFACE   => "the CGI specification revision",   
+			    GATEWAY_INTERFACE   => "the CGI specification revision",
 			    SERVER_PROTOCOL     => "the server protocol name",
 			    SERVER_PORT         => "the port number for the server",
 			    REQUEST_METHOD      => "the HTTP request method",
@@ -403,7 +403,7 @@ sub adminportal
 			print start_form(-method=>'POST',-action=>'/cgi-bin/badstore.cgi?action=moduser'),
 			"Email Address:  ",textfield(-name=>'email',-size=>40),p,
 			hidden(-name=>'password',-default=>[md5_hex('Welcome')]),
-			"Password Hint:  ",popup_menu(-name=>'pwdhint',-values=>['green','blue','red','orange','purple','yellow']),p,			
+			"Password Hint:  ",popup_menu(-name=>'pwdhint',-values=>['green','blue','red','orange','purple','yellow']),p,
 			"Full Name:  ",textfield(-name=>'fullname',-size=>50),p,
 			"Role:  ",textfield(-name=>'role',-size=>1),p,
 			submit(-name=>'DoMods',-value=>'Add User'), reset(), end_form,hr;
@@ -423,7 +423,7 @@ sub adminportal
 			p, "Delete User: ",
 			popup_menu(-name=>'email', -values=>[@ids]),
 			submit(-name=>'DoMods',-value=>'Delete User'), end_form;
-	
+
 			### Close statement handles ###
 			$sth->finish;
 
@@ -435,7 +435,7 @@ sub adminportal
 	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
 		      $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
 			print "<TABLE BORDER=1>",
-			Tr(th('Email Address'),th('Password'),th('Pass Hint'),th('Full Name'),th('Role'));	
+			Tr(th('Email Address'),th('Password'),th('Pass Hint'),th('Full Name'),th('Role'));
 			while (@data=$sth->fetchrow_array()) {
 				print Tr(td(font({face=>'Arial', size=>'-2'},$data[0])),td(font({face=>'Arial', size=>'-2'},$data[1])),td(font({face=>'Arial', size=>'-2'},$data[2])),td(font({face=>'Arial', size=>'-2'},$data[3])),td(font({face=>'Arial', size=>'-2'},$data[4])));
 			}
@@ -502,7 +502,7 @@ sub doguestbook
 {
 	local($timestamp, $name, $email, $comments, %fields);
 	my ($dataFile) = "/data/apache2/data/guestbookdb";
-	
+
 	$timestamp=&getdate;
 	$name=$query->param('name');
 	$email=$query->param('email');
@@ -592,7 +592,7 @@ sub cartadd
 	### Check for zero update value ###
 	if ($contents[0] eq ""){
 		&printheaders;
-		print start_page("BadStore.net - Cart Error"), h1("Cart Error - Zero Items"), 
+		print start_page("BadStore.net - Cart Error"), h1("Cart Error - Zero Items"),
 		"Something weird happened - you tried to add no items to the cart!",p,
 		"Use your browser's Back button and try again.", p, p, p,
 		h3("(If you're trying to hack - I know who you are:   $ipaddr)"),
@@ -774,7 +774,7 @@ sub viewprevious
 		Tr( th('Order Date'),th('Order Cost'),th('# Items'),th('Item List'),th('Card Used'));
           	while (@data = $sth->fetchrow_array()) {
 			$data[4]=~ s/(\d\d\d\d)[\ \s]?/$1 /g;
-			$data[4]=~ s/ $//;			
+			$data[4]=~ s/ $//;
 			print Tr( td( \@data ));
 			}
 		print "</TABLE>\n\n", p,
@@ -814,7 +814,7 @@ sub aboutus
 sub supplierlogin
 {
 	&printheaders;
-	
+
 	print start_page('Supplier Portal Login - BadStore.net');
 	print "<h2>Welcome Supplier - Please Login</h2>";
 	print '<form method="post" action="/cgi-bin/badstore.cgi?action=supplierportal">',
@@ -824,14 +824,14 @@ sub supplierlogin
 	  '<tr><td></td><td><input type="submit" value="Login" /></td></tr>',
      '</table>',
     '</form>';
-	
+
 	#h1("Welcome Supplier - Please Login:"), hr, p,
 	#start_form(-method=>'POST', -action=>'/cgi-bin/badstore.cgi?action=supplierportal'),
 	#" Email Address:  ", textfield(-name=>'email', -size=>15, -maxlength=>40), p,
 	#" Password:  ", password_field(-name=>'passwd', -size=>8 -maxlength=>8),p,
 	#submit("Login"), end_form,
-	
-	
+
+
 	print end_page();
 }
 
@@ -844,10 +844,10 @@ sub supplierlogin
 sub supplierproc
 {
    &printheaders;
-	
+
    print start_page('Supplier Pricing Upload Procedure - BadStore.net');
    print "<h2>Supplier Pricing Upload Procedure</h2>";
-   
+
    print q|
    <p>To save our administrative staff some work, we have implemented a page where you, our Valued Suppliers, can upload your new pricelist.  This lets you manage your product descriptions and pricing without us having to do anything.  We hope that you will like this procedure as much as we like it.</p>
    <p>It was really an easy, quick little application for us to develop.  It only took an hour, in fact.</p>
@@ -891,7 +891,7 @@ sub supplierportal
 	&printheaders;
 	print start_page("Welcome to the BadStore.net Supplier Portal"),
 	h1("Welcome Supplier");
-     	
+
 	if ($sth->rows == 0) {
            		print p("UserID and Password not found! Use your browser's Back button and try again."),
      		} else {
@@ -930,17 +930,17 @@ sub supupload
 		print h1("Upload a file");
 
 		$newfilename = $query->param('newfilename');
-		$filename = $query->param('uploaded_file'); 
+		$filename = $query->param('uploaded_file');
 		$filename =~ s/.*[\/\\](.*)/$1/;
-		chomp($filename); 
-		$upload_filehandle = $query->upload('uploaded_file'); 
+		chomp($filename);
+		$upload_filehandle = $query->upload('uploaded_file');
 		open (OUT, ">../data/uploads/$newfilename") or die "Can't open $newfilename for appending: $!\n";
-		while (<$upload_filehandle>) 
-		{ 
+		while (<$upload_filehandle>)
+		{
 			print OUT;
 		}
-		close OUT; 
-		print p, h2("Thanks for uploading your new pricing file!"), p, 
+		close OUT;
+		print p, h2("Thanks for uploading your new pricing file!"), p,
 		h3("Your file has been uploaded: $newfilename"), p,
 
 	} else {
@@ -1089,7 +1089,7 @@ sub loginregister
       </table>
    </form>
    |;
-   
+
    print end_page();
    #&printheaders;
    #print start_page('BadStore.net - Register/Login'),
@@ -1118,7 +1118,7 @@ sub loginregister
 sub myaccount
 {
 	local($aquery, $email, $passwd, $pwdhint, $fullname, $role, $newpasswd, $vnewpasswd, $encpasswd);
- 
+
 	### Read SSOid Cookie ###
 	$stemp=cookie('SSOid');
 	$stemp=decode_base64($stemp);
@@ -1195,7 +1195,7 @@ sub moduser
 		my $sth=$dbh->prepare("UPDATE userdb SET passwd = '$encpasswd' WHERE email='$email'")
 			or die "Could not update password: ".$dbh->errstr;
 		$sth->execute() or die "Couldn't execute SQL statement: ".$sth->errstr;
-	
+
 		print h2('The password for user:  ', $email,p, ' ...has been reset to: ',$newpasswd),
 
 	}elsif ($aquery eq 'Add User'){
