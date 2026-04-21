@@ -615,7 +615,7 @@ sub cartadd
 
 		### Create initial CartID cookie
 		$cookievalue=join(":", ($sessid, $cartitems, $cartcost, @contents));
-		$cartcookie=cookie( -name=>'CartID', -value=>$cookievalue, -path=>'/');
+		$cartcookie=cookie( -name=>'CartID', -value=>$cookievalue, -path=>'/', -HttpOnly=>'true', -SameSite=>'Strict');
 		print "Set-Cookie: $cartcookie\n";
 
 		&home
@@ -641,7 +641,7 @@ sub order
 	$email=$query->param('email');
 
 	### Expire the Cookie ###
-	$cartcookie=cookie( -name=>'CartID', -value=>'', -expires=>'-1d', -path=>'/');
+	$cartcookie=cookie( -name=>'CartID', -value=>'', -expires=>'-1d', -path=>'/', -HttpOnly=>'true', -SameSite=>'Strict');
 	print "Set-Cookie: $cartcookie\n";
 
 	### Get the hidden fields ###
@@ -1289,7 +1289,7 @@ sub authuser
 	### Set SSO Cookie ###
 		$cookievalue=join(":", ($email, $passwd, $fullname, $role));
 		$cookievalue=encode_base64($cookievalue);
-		$cartcookie=cookie( -name=>'SSOid', -value=>$cookievalue, -path=>'/');
+		$cartcookie=cookie( -name=>'SSOid', -value=>$cookievalue, -path=>'/', -HttpOnly=>'true', -SameSite=>'Strict');
 		print "Set-Cookie: $cartcookie\n";
 
 	### Disconnect from the databases ###
