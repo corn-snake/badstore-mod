@@ -1082,7 +1082,6 @@ sub loginregister
        <tr>
          <td></td>
          <td>
-            <input type="hidden" name="role" value="U" />
             <input type="submit" value="Register" />
          </td>
        </tr>
@@ -1235,17 +1234,15 @@ sub moduser
 
 sub authuser
 {
-	local(@data, $email, $passwd, $pwdhint,$fullname, $role);
+	local(@data, $email, $passwd, $pwdhint,$fullname);
 	$email=$query->param('email');
 	$passwd=$query->param('passwd');
 	$pwdhint=$query->param('pwdhint');
 	$fullname=$query->param('fullname');
-	$role=$query->param('role');
 	chomp($email);
 	chomp($passwd);
 	chomp($pwdhint);
 	chomp($fullname);
-	chomp($role);
 	$passwd=md5_hex($passwd);
 
 	### Connect to the SQL Database ###
@@ -1267,21 +1264,21 @@ sub authuser
 			"Use your browser's Back button and try again.",
 			end_page();
 			exit;
-     		} else {
-		### Login credentials are valid ###
+  		} else {
+      		### Login credentials are valid ###
 
-		@data=$sth->fetchrow_array();
-		$fullname=$data[3];
-		$role=$data[4];
+      		@data=$sth->fetchrow_array();
+      		$fullname=$data[3];
+      		$role=$data[4];
 
-		### Close statement handles ###
-		$sth->finish;
-		}
+      		### Close statement handles ###
+      		$sth->finish;
+        }
 	} else {
 
 		### Register for a new account as a normal user ###
 		### Add ordered items to Order Database ###
-		$dbh->do("INSERT INTO userdb (email, passwd, pwdhint, fullname, role) VALUES ('$email', '$passwd','$pwdhint', '$fullname', '$role')")
+		$dbh->do("INSERT INTO userdb (email, passwd, pwdhint, fullname, role) VALUES ('$email', '$passwd','$pwdhint', '$fullname', 'U')")
 			or die "Couldn't prepare SQL statement for Registration: " . $dbh->errstr;
 	}
 
