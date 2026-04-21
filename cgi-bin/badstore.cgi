@@ -193,24 +193,24 @@ sub whatsnew
 
 	### Prepare and Execute SQL Query ###
 	my $sth = $dbh->prepare( "SELECT itemnum, sdesc, ldesc, price FROM itemdb WHERE isnew = 'Y'")
-                or die "Couldn't prepare statement: " . $dbh->errstr;
-          $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+        or die "Couldn't prepare statement: " . $dbh->errstr;
+    $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
 
 	&printheaders;
 	print start_page("What's New at BadStore.net");
 	if ($sth->rows == 0) {
       	print h2("No new items! "),"$sth.\n\n";
-      } else {
+    } else {
 		print start_form( -action=>'/cgi-bin/badstore.cgi?action=cartadd');
 		### Read the matching records and print them out ###
 		print h2("The following are new items:"),'<table cellspacing="0" cellpadding="0" class="products">';
 		print Tr( th('ItemNum'),th('Item'),th('Description'),th('Price'),th('Image'),th('Select'));
-          		while (@data = $sth->fetchrow_array()) {
-				$image='/images/' . $data[0] . '.jpg';
-				print Tr( td( \@data ),td({-align=>CENTER},"<IMG SRC=$image>"),td({-align=>CENTER},"<INPUT type=checkbox name='cartitem' value=$data[0]>") );
-			}
-		print "</table>\n\n", p, "<Center>", submit('Add Items to Cart'), "   ", reset(), "</Center>", end_form;
+  		while (@data = $sth->fetchrow_array()) {
+			$image='/images/' . $data[0] . '.jpg';
+			print Tr( td( \@data ),td({-align=>CENTER},"<IMG SRC=$image>"),td({-align=>CENTER},"<INPUT type=checkbox name='cartitem' value=$data[0]>") );
 		}
+		print "</table>\n\n", p, "<Center>", submit('Add Items to Cart'), "   ", reset(), "</Center>", end_form;
+	}
 
 	### Close statement handles ###
 	$sth->finish;
@@ -235,29 +235,29 @@ sub search
 		or die "Cannot connect: " . $DBI::errstr;
 
 	### Prepare and Execute SQL Query ###
-	$sql="SELECT itemnum, sdesc, ldesc, price FROM itemdb WHERE '$squery' IN (itemnum,sdesc,ldesc)";
+	$sql="SELECT itemnum, sdesc, ldesc, price FROM itemdb WHERE ? IN (itemnum,sdesc,ldesc)";
 	my $sth = $dbh->prepare($sql)
-                or die "Couldn't prepare SQL statement: " . $dbh->errstr;
+        or die "Couldn't prepare SQL statement: " . $dbh->errstr;
 	$temp=$sth;
-      $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+    $sth->execute($squery) or die "Couldn't execute SQL statement: " . $sth->errstr;
 
 	&printheaders;
 	print start_page("BadStore.net - Search Results");
 	print comment('Search code developed by Bobby Jones - summer intern, 1996');
 	print comment('Comment the $sql line out after troubleshooting is done');
 
-          if ($sth->rows == 0) {
-            print h2("No items matched your search criteria: "), $sql, $sth->errstr;
-          } else {
-	### Read the matching records and print them out ###
-	print h2("The following items matched your search criteria:"),
-    start_form( -action=>'/cgi-bin/badstore.cgi?action=cartadd'),"<TABLE BORDER=1>",
-	Tr( th('ItemNum'),th('Item'),th('Description'),th('Price'),th('Image'),th('Add to Cart'));
-          while (@data = $sth->fetchrow_array()) {
-		$image='/images/' . $data[0] . '.jpg';
-		print Tr( td( \@data ),td({-align=>CENTER},"<IMG SRC=$image>"),td({-align=>CENTER},"<INPUT type=checkbox name='cartitem' value=$data[0]>") );
+    if ($sth->rows == 0) {
+        print h2("No items matched your search criteria: "), $sql, $sth->errstr;
+    } else {
+        ### Read the matching records and print them out ###
+    	print h2("The following items matched your search criteria:"),
+        start_form( -action=>'/cgi-bin/badstore.cgi?action=cartadd'),"<TABLE BORDER=1>",
+    	Tr( th('ItemNum'),th('Item'),th('Description'),th('Price'),th('Image'),th('Add to Cart'));
+        while (@data = $sth->fetchrow_array()) {
+            $image='/images/' . $data[0] . '.jpg';
+		    print Tr( td( \@data ),td({-align=>CENTER},"<IMG SRC=$image>"),td({-align=>CENTER},"<INPUT type=checkbox name='cartitem' value=$data[0]>") );
 		}
-	print "</TABLE>\n\n", p, "<Center>", submit('Add Items to Cart'), "   ", reset(), "</Center>", end_form;
+		print "</TABLE>\n\n", p, "<Center>", submit('Add Items to Cart'), "   ", reset(), "</Center>", end_form;
 	}
 
 	### Close statement handles ###
@@ -312,162 +312,157 @@ sub adminportal
 	### Check SSO Cookie for Admin Role ###
 	if ($role eq 'A') {
 
-	### Connect to the SQL Database ###
-	my $dbh = DBI->connect("DBI:mysql:database=badstoredb;host=localhost", "root", "secret",{'RaiseError' => 1})
-	or die "Cannot connect: " . $DBI::errstr;
+    	### Connect to the SQL Database ###
+    	my $dbh = DBI->connect("DBI:mysql:database=badstoredb;host=localhost", "root", "secret",{'RaiseError' => 1})
+    	or die "Cannot connect: " . $DBI::errstr;
 
-		### Prepare the Sales Report ###
-		if ($aquery eq 'View Sales Reports') {
-		my $sth = $dbh->prepare("SELECT * FROM orderdb ORDER BY 'orderdate','ordertime'")
-			or die "Couldn't prepare statement: " . $dbh->errstr;
-		$sth->execute() or die "Couldn't execute SQL statement: " .$sth->errstr;
+    	### Prepare the Sales Report ###
+    	if ($aquery eq 'View Sales Reports') {
+           	my $sth = $dbh->prepare("SELECT * FROM orderdb ORDER BY 'orderdate','ordertime'")
+          		or die "Couldn't prepare statement: " . $dbh->errstr;
+           	$sth->execute() or die "Couldn't execute SQL statement: " .$sth->errstr;
 
-		print h2("<Center>BadStore.net Sales Report",p,&getdate,"</center>"),
-		"<TABLE BORDER=1>",
-		Tr(th('Date'),th('Time'),th('Cost'),th('Count'),th('Items'),th('Account'),th('IP'),th('Paid'),th('Credit_Card_Used'),th('ExpDate'));
-		while (@data=$sth->fetchrow_array()){
-			$data[9]=~ s/(\d\d\d\d)[\-\s]?/$1-/g;
-			$data[9]=~ s/-$//;
-			print Tr(td(font({face=>'Arial', size=>'-2'},$data[1])),td(font({face=>'Arial', size=>'-2'},$data[2])),td(font({face=>'Arial', size=>'-2'},$data[3])),td(font({face=>'Arial', size=>'-2'},$data[4])),td(font({face=>'Arial', size=>'-2'},$data[5])),td(font({face=>'Arial', size=>'-2'},$data[6])),td(font({face=>'Arial', size=>'-2'},$data[7])),td(font({face=>'Arial', size=>'-2'},$data[8])),td(font({face=>'Arial', size=>'-2'},$data[9])),td(font({face=>'Arial',size=>'-2'},$data[10])));
-		}
-		print "</TABLE>\n\n",p;
+           	print h2("<Center>BadStore.net Sales Report",p,&getdate,"</center>"),
+           	"<TABLE BORDER=1>",
+           	Tr(th('Date'),th('Time'),th('Cost'),th('Count'),th('Items'),th('Account'),th('IP'),th('Paid'),th('Credit_Card_Used'),th('ExpDate'));
+           	while (@data=$sth->fetchrow_array()){
+          		$data[9]=~ s/(\d\d\d\d)[\-\s]?/$1-/g;
+          		$data[9]=~ s/-$//;
+          		print Tr(td(font({face=>'Arial', size=>'-2'},$data[1])),td(font({face=>'Arial', size=>'-2'},$data[2])),td(font({face=>'Arial', size=>'-2'},$data[3])),td(font({face=>'Arial', size=>'-2'},$data[4])),td(font({face=>'Arial', size=>'-2'},$data[5])),td(font({face=>'Arial', size=>'-2'},$data[6])),td(font({face=>'Arial', size=>'-2'},$data[7])),td(font({face=>'Arial', size=>'-2'},$data[8])),td(font({face=>'Arial', size=>'-2'},$data[9])),td(font({face=>'Arial',size=>'-2'},$data[10])));
+           	}
+    	    print "</TABLE>\n\n",p;
+            $sth->finish; #flush
+    	} elsif ($aquery eq 'Reset User Password') {
+    		### Reset User Password ###
+    		### Prepare and Execute SQL Query ###
+    		my $sth = $dbh->prepare( "SELECT email FROM userdb")
+           	    or die "Couldn't prepare statement: " . $dbh->errstr;
+            $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+    		while (@data=$sth->fetchrow_array()) {
+    			@ids=(@ids, $data[0]);
+    		}
+    		print start_form( -action=>'/cgi-bin/badstore.cgi?action=moduser'),
+    		p, "Reset password for: ",
+    		popup_menu(-name=>'email', -values=>[@ids]),
+    		submit(-name=>'DoMods',-value=>'Reset User Password'), end_form;
 
-		} elsif ($aquery eq 'Reset User Password') {
+    		### Close statement handles ###
+    		$sth->finish;
+    	} elsif ($aquery eq 'Troubleshooting') {
 
-			### Reset User Password ###
-			### Prepare and Execute SQL Query ###
-			my $sth = $dbh->prepare( "SELECT email FROM userdb")
-	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
-		      $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
-			while (@data=$sth->fetchrow_array()) {
-				@ids=(@ids, $data[0]);
-			}
-			print start_form( -action=>'/cgi-bin/badstore.cgi?action=moduser'),
-			p, "Reset password for: ",
-			popup_menu(-name=>'email', -values=>[@ids]),
-			submit(-name=>'DoMods',-value=>'Reset User Password'), end_form;
+    		### Print CGI Environment ###
+    		print h2("CGI Environment Variables"), "<TABLE BORDER=1>";
 
-			### Close statement handles ###
-			$sth->finish;
+    		my %env_info = (
+    	  	    SERVER_SOFTWARE     => "the server software",
+    		    SERVER_NAME         => "the server hostname or IP address",
+    		    GATEWAY_INTERFACE   => "the CGI specification revision",
+    		    SERVER_PROTOCOL     => "the server protocol name",
+    		    SERVER_PORT         => "the port number for the server",
+    		    REQUEST_METHOD      => "the HTTP request method",
+    		    PATH_INFO           => "the extra path info",
+    		    PATH_TRANSLATED     => "the extra path info translated",
+    		    DOCUMENT_ROOT       => "the server document root directory",
+    		    SCRIPT_NAME         => "the script name",
+    		    QUERY_STRING        => "the query string",
+    		    REMOTE_HOST         => "the hostname of the client",
+    		    REMOTE_ADDR         => "the IP address of the client",
+    		    AUTH_TYPE           => "the authentication method",
+    		    REMOTE_USER         => "the authenticated username",
+    		    REMOTE_IDENT        => "the remote user is (RFC 931): ",
+    		    CONTENT_TYPE        => "the media type of the data",
+    		    CONTENT_LENGTH      => "the length of the request body",
+    		    HTTP_ACCEPT         => "the media types the client accepts",
+    		    HTTP_USER_AGENT     => "the browser the client is using",
+    		    HTTP_REFERER        => "the URL of the referring page",
+    		    HTTP_COOKIE         => "the cookie(s) the client sent"
+    		);
 
-     		} elsif ($aquery eq 'Troubleshooting') {
+    		# Add additional variables defined by web server or browser
+    		foreach $name ( keys %ENV ) {
+    		    $env_info{$name} = "an extra variable provided by this server"
+    	        unless exists $env_info{$name};
+    		}
+    		print Tr( th('Variable Name'),th('Description'),th('Value'));
+    		foreach $name ( sort keys %env_info ) {
+    	    	my $info = $env_info{$name};
+    	   		my $value = $ENV{$name} || "<I>Not Defined</I>";
+    			print Tr( td(font({face=>'Arial', size=>'-2'}, $name )),td(font({face=>'Arial', size=>'-2'}, $info )), td(font({face=>'Arial', size=>'-2'}, $value )));
+    		}
+    		print "</TABLE>",p,
+    		h2("Recent Apache Error Log"),p,
+    		`tail /data/apache2/logs/error_log`,
+    		p, h2("Apache Access Log"),p,
+    		`cat /data/apache2/data/userdb`;
+    	} elsif ($aquery eq 'Add User') {
+    		### Add a User ###
+    		print start_form(-method=>'POST',-action=>'/cgi-bin/badstore.cgi?action=moduser'),
+    		"Email Address:  ",textfield(-name=>'email',-size=>40),p,
+    		hidden(-name=>'password',-default=>[md5_hex('Welcome')]),
+    		"Password Hint:  ",popup_menu(-name=>'pwdhint',-values=>['green','blue','red','orange','purple','yellow']),p,
+    		"Full Name:  ",textfield(-name=>'fullname',-size=>50),p,
+    		"Role:  ",textfield(-name=>'role',-size=>1),p,
+    		submit(-name=>'DoMods',-value=>'Add User'), reset(), end_form,hr;
+    	} elsif ($aquery eq 'Delete User') {
+    		### Delete User ###
+    		### Prepare and Execute SQL Query ###
+    		my $sth = $dbh->prepare("SELECT email FROM userdb")
+       	        or die "Couldn't prepare statement: " . $dbh->errstr;
+            $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
 
-			### Print CGI Environment ###
-			print h2("CGI Environment Variables"), "<TABLE BORDER=1>";
+    		while (@data=$sth->fetchrow_array()) {
+    			@ids=(@ids, $data[0]);
+    		}
 
-			my %env_info = (
-		  	    SERVER_SOFTWARE     => "the server software",
-			    SERVER_NAME         => "the server hostname or IP address",
-			    GATEWAY_INTERFACE   => "the CGI specification revision",
-			    SERVER_PROTOCOL     => "the server protocol name",
-			    SERVER_PORT         => "the port number for the server",
-			    REQUEST_METHOD      => "the HTTP request method",
-			    PATH_INFO           => "the extra path info",
-			    PATH_TRANSLATED     => "the extra path info translated",
-			    DOCUMENT_ROOT       => "the server document root directory",
-			    SCRIPT_NAME         => "the script name",
-			    QUERY_STRING        => "the query string",
-			    REMOTE_HOST         => "the hostname of the client",
-			    REMOTE_ADDR         => "the IP address of the client",
-			    AUTH_TYPE           => "the authentication method",
-			    REMOTE_USER         => "the authenticated username",
-			    REMOTE_IDENT        => "the remote user is (RFC 931): ",
-			    CONTENT_TYPE        => "the media type of the data",
-			    CONTENT_LENGTH      => "the length of the request body",
-			    HTTP_ACCEPT         => "the media types the client accepts",
-			    HTTP_USER_AGENT     => "the browser the client is using",
-			    HTTP_REFERER        => "the URL of the referring page",
-			    HTTP_COOKIE         => "the cookie(s) the client sent"
-			);
+    		print start_form(-action=>'/cgi-bin/badstore.cgi?action=moduser'),
+    		p, "Delete User: ",
+    		popup_menu(-name=>'email', -values=>[@ids]),
+    		submit(-name=>'DoMods',-value=>'Delete User'), end_form;
 
-			# Add additional variables defined by web server or browser
-			foreach $name ( keys %ENV ) {
-			    $env_info{$name} = "an extra variable provided by this server"
-		        unless exists $env_info{$name};
-			}
-			print Tr( th('Variable Name'),th('Description'),th('Value'));
-			foreach $name ( sort keys %env_info ) {
-		    		my $info = $env_info{$name};
-		   		my $value = $ENV{$name} || "<I>Not Defined</I>";
-				print Tr( td(font({face=>'Arial', size=>'-2'}, $name )),td(font({face=>'Arial', size=>'-2'}, $info )), td(font({face=>'Arial', size=>'-2'}, $value )));
-			}
-			print "</TABLE>",p,
-			h2("Recent Apache Error Log"),p,
-			`tail /data/apache2/logs/error_log`,
-			p, h2("Apache Access Log"),p,
-			`cat /data/apache2/data/userdb`;
+    		### Close statement handles ###
+    		$sth->finish;
 
-			} elsif ($aquery eq 'Add User') {
-
-			### Add a User ###
-			print start_form(-method=>'POST',-action=>'/cgi-bin/badstore.cgi?action=moduser'),
-			"Email Address:  ",textfield(-name=>'email',-size=>40),p,
-			hidden(-name=>'password',-default=>[md5_hex('Welcome')]),
-			"Password Hint:  ",popup_menu(-name=>'pwdhint',-values=>['green','blue','red','orange','purple','yellow']),p,
-			"Full Name:  ",textfield(-name=>'fullname',-size=>50),p,
-			"Role:  ",textfield(-name=>'role',-size=>1),p,
-			submit(-name=>'DoMods',-value=>'Add User'), reset(), end_form,hr;
-
-			} elsif ($aquery eq 'Delete User') {
-			### Delete User ###
-			### Prepare and Execute SQL Query ###
-			my $sth = $dbh->prepare( "SELECT email FROM userdb")
-	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
-		      $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
-
-			while (@data=$sth->fetchrow_array()) {
-				@ids=(@ids, $data[0]);
-			}
-
-			print start_form(-action=>'/cgi-bin/badstore.cgi?action=moduser'),
-			p, "Delete User: ",
-			popup_menu(-name=>'email', -values=>[@ids]),
-			submit(-name=>'DoMods',-value=>'Delete User'), end_form;
-
-			### Close statement handles ###
-			$sth->finish;
-
-			} elsif ($aquery eq 'Show Current Users') {
-
-			### Show Current Users ###
-			### Prepare and Execute SQL Query ###
-			my $sth = $dbh->prepare( "SELECT * FROM userdb")
-	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
-		      $sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
-			print "<TABLE BORDER=1>",
-			Tr(th('Email Address'),th('Password'),th('Pass Hint'),th('Full Name'),th('Role'));
-			while (@data=$sth->fetchrow_array()) {
-				print Tr(td(font({face=>'Arial', size=>'-2'},$data[0])),td(font({face=>'Arial', size=>'-2'},$data[1])),td(font({face=>'Arial', size=>'-2'},$data[2])),td(font({face=>'Arial', size=>'-2'},$data[3])),td(font({face=>'Arial', size=>'-2'},$data[4])));
-			}
-			print "</TABLE>";
-			} elsif ($aquery eq 'Backup Databases') {
-      ### Unlink old backups ###
-      if( -f '/data/apache2/htdocs/backup/orderdb.bak') {
-              unlink '/data/apache2/htdocs/backup/orderdb.bak';
-      }
-      if( -f '/data/apache2/htdocs/backup/userdb.bak') {
-              unlink '/data/apache2/htdocs/backup/userdb.bak';
-      }
-      ### Backup the Tables ###
-			my $sth = $dbh->prepare( "SELECT * FROM orderdb INTO OUTFILE '/data/apache2/htdocs/backup/orderdb.bak'")
-	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
-		      	$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
-			my $sth = $dbh->prepare( "SELECT * FROM userdb INTO OUTFILE '/data/apache2/htdocs/backup/userdb.bak'")
-	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
-		      	$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
-			print h2("Database backup compete - files in www.badstore.net/backup");
-			}
-		### Disconnect from the databases ###
-		$dbh->disconnect;
-
-	} else {
-		### Not an Admin user ###
-		print h2("Error - $fullname is not an Admin!"),
+    	} elsif ($aquery eq 'Show Current Users') {
+    		### Show Current Users ###
+    		### Prepare and Execute SQL Query ###
+    		my $sth = $dbh->prepare( "SELECT * FROM userdb")
+           	    or die "Couldn't prepare statement: " . $dbh->errstr;
+    		$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+    		print "<TABLE BORDER=1>",
+    		Tr(th('Email Address'),th('Password'),th('Pass Hint'),th('Full Name'),th('Role'));
+    		while (@data=$sth->fetchrow_array()) {
+    			print Tr(td(font({face=>'Arial', size=>'-2'},$data[0])),td(font({face=>'Arial', size=>'-2'},$data[1])),td(font({face=>'Arial', size=>'-2'},$data[2])),td(font({face=>'Arial', size=>'-2'},$data[3])),td(font({face=>'Arial', size=>'-2'},$data[4])));
+    		}
+    		print "</TABLE>";
+    	} elsif ($aquery eq 'Backup Databases') {
+            ### Unlink old backups ###
+            if( -f '/data/apache2/htdocs/backup/orderdb.bak') {
+                    unlink '/data/apache2/htdocs/backup/orderdb.bak';
+            }
+            if( -f '/data/apache2/htdocs/backup/userdb.bak') {
+                    unlink '/data/apache2/htdocs/backup/userdb.bak';
+            }
+            ### Backup the Tables ###
+ 			my $sth = $dbh->prepare( "SELECT * FROM orderdb INTO OUTFILE '/data/apache2/htdocs/backup/orderdb.bak'")
+  	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
+   		      	$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+ 			$sth->finish; #flush
+ 			my $sth = $dbh->prepare( "SELECT * FROM userdb INTO OUTFILE '/data/apache2/htdocs/backup/userdb.bak'")
+  	            	    or die "Couldn't prepare statement: " . $dbh->errstr;
+   		      	$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+ 			$sth->finish;
+ 			print h2("Database backup compete - files in www.badstore.net/backup");
+        }
+       	### Disconnect from the databases ###
+  		$dbh->disconnect;
+    } else {
+  		### Not an Admin user ###
+  		print h2("Error - $fullname is not an Admin!"),
         "Something weird happened - you tried to access the ",
-		"Adminstrative Portal, but you are not an Administrative User.", p,
-		"You must login as an Admin to access this resource.", p,
-		"Use your browser's Back button and go to Login.", p, p, p,
-		h3("(If you're trying to hack - I know who you are:   $ipaddr)");
+  		"Adminstrative Portal, but you are not an Administrative User.", p,
+  		"You must login as an Admin to access this resource.", p,
+  		"Use your browser's Back button and go to Login.", p, p, p,
+  		h3("(If you're trying to hack - I know who you are:   $ipaddr)");
 	}
 	print end_page();
 }
@@ -605,16 +600,17 @@ sub cartadd
 
 		foreach $temp (@contents) {
 			$cartitems = $cartitems + 1;
-			my $sth = $dbh->prepare( "SELECT price FROM itemdb WHERE itemnum = '$temp'")
-            		or die "Couldn't prepare statement: " . $dbh->errstr;
-          		$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+			my $sth = $dbh->prepare("SELECT price FROM itemdb WHERE itemnum = ?")
+          		or die "Couldn't prepare statement: " . $dbh->errstr;
+      		$sth->execute($temp) or die "Couldn't execute SQL statement: " . $sth->errstr;
 
-          		if ($sth->rows == 0) {
-            		die "Item number not found: " . $sth->errstr;
-          		} else {
-			### Update cart cost ###
-			$cartcost = $cartcost + $sth->fetchrow_array();
+      		if ($sth->rows == 0) {
+          		die "Item number not found: " . $sth->errstr;
+      		} else {
+    			### Update cart cost ###
+    			$cartcost = $cartcost + $sth->fetchrow_array();
 			}
+			$sth->finish; #flush
 		}
 
 		### Create initial CartID cookie
@@ -622,7 +618,7 @@ sub cartadd
 		$cartcookie=cookie( -name=>'CartID', -value=>$cookievalue, -path=>'/');
 		print "Set-Cookie: $cartcookie\n";
 
-	&home
+		&home
 	}
 }
 
@@ -666,27 +662,30 @@ sub order
 			or die "Cannot connect: " . $DBI::errstr;
 
 	### Add ordered items to Order Database ###
-	$dbh->do("INSERT INTO orderdb (sessid, orderdate, ordertime, ordercost, orderitems, itemlist, accountid, ipaddr, cartpaid, ccard, expdate) VALUES ('$id', CURDATE(), CURTIME(), '$price', '$items', '$cartitems', '$email', '$ipaddr', 'Y', '$ccard', '$expdate')")
-	or die "Couldn't prepare SQL statement for order: " . $dbh->errstr;
+	my $sth=$dbh->prepare("INSERT INTO orderdb (sessid, orderdate, ordertime, ordercost, orderitems, itemlist, accountid, ipaddr, cartpaid, ccard, expdate) VALUES (?, CURDATE(), CURTIME(), ?, ?, ?, ?, ?, 'Y', ?, ?)")
+	    or die "Couldn't prepare SQL statement for order: " . $dbh->errstr;
+	$sth->execute($id,$price,$items,$cartitems,$email,$ipaddr,$ccard,$expdate)
+	    or die "Couldn't execute SQL statement: " . $sth->errstr;
+	$sth->finish; # flush
 
-		print p("You have just bought the following:");
+	print p("You have just bought the following:");
 
-		### Prepare and Execute SQL Query ###
-		my $sth = $dbh->prepare( "SELECT itemnum, sdesc, ldesc, price FROM itemdb WHERE itemnum IN ($cartitems)")
-           		or die "Couldn't prepare statement: " . $dbh->errstr;
-     		$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
-     		if ($sth->rows == 0) {
-           		die "Item number not found: " . $sth->errstr;
-     		} else {
-		### Read the matching records and print them out ###
-		print '<table cellspacing="0" cellpadding="0" class="products">',
-		Tr( th('ItemNum'),th('Item'),th('Description'),th('Price'),th('Image'));
-          	while (@data = $sth->fetchrow_array()) {
-			$image='/images/' . $data[0] . '.jpg';
-			print Tr( td( \@data ),td({-align=>CENTER},"<IMG SRC=$image>") );
-			}
-		print "</table>\n\n", p("Purchased: $items items at $price. Thank you for shopping at BadStore.net!");
-		}
+	### Prepare and Execute SQL Query ###
+	my $sth = $dbh->prepare( "SELECT itemnum, sdesc, ldesc, price FROM itemdb WHERE itemnum IN (?)")
+          		or die "Couldn't prepare statement: " . $dbh->errstr;
+    $sth->execute($cartitems) or die "Couldn't execute SQL statement: " . $sth->errstr;
+    if ($sth->rows == 0) {
+  		die "Item number not found: " . $sth->errstr;
+    } else {
+        ### Read the matching records and print them out ###
+    	print '<table cellspacing="0" cellpadding="0" class="products">',
+    	Tr( th('ItemNum'),th('Item'),th('Description'),th('Price'),th('Image'));
+       	while (@data = $sth->fetchrow_array()) {
+    		$image='/images/' . $data[0] . '.jpg';
+    		print Tr( td( \@data ),td({-align=>CENTER},"<IMG SRC=$image>") );
+        }
+        print "</table>\n\n", p("Purchased: $items items at $price. Thank you for shopping at BadStore.net!");
+	}
 	### Close statement handles ###
 	$sth->finish;
 
@@ -762,9 +761,9 @@ sub viewprevious
 		my $dbh = DBI->connect("DBI:mysql:database=badstoredb;host=localhost", "root", "secret",{'RaiseError' => 1})
 			or die "Cannot connect: " . $DBI::errstr;
 
-		my $sth = $dbh->prepare( "SELECT orderdate, ordercost, orderitems, itemlist, ccard FROM orderdb WHERE accountid = '$email' ORDER BY orderdate,ordertime")
+		my $sth = $dbh->prepare( "SELECT orderdate, ordercost, orderitems, itemlist, ccard FROM orderdb WHERE accountid = ? ORDER BY orderdate,ordertime")
                 or die "Couldn't prepare statement: " . $dbh->errstr;
-        	$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+        	$sth->execute($email) or die "Couldn't execute SQL statement: " . $sth->errstr;
 
      		if ($sth->rows == 0) {
                print p('You have no previous orders!'), p("Use your browser's Back button and select Login.");
@@ -773,19 +772,19 @@ sub viewprevious
 		print "<TABLE BORDER=1>",
 		Tr( th('Order Date'),th('Order Cost'),th('# Items'),th('Item List'),th('Card Used'));
           	while (@data = $sth->fetchrow_array()) {
-			$data[4]=~ s/(\d\d\d\d)[\ \s]?/$1 /g;
-			$data[4]=~ s/ $//;
-			print Tr( td( \@data ));
+    			$data[4]=~ s/(\d\d\d\d)[\ \s]?/$1 /g;
+    			$data[4]=~ s/ $//;
+    			print Tr( td( \@data ));
 			}
-		print "</TABLE>\n\n", p,
-		"<Center><i>Thank you for shopping at BadStore.net!</i></Center>";
+    		print "</TABLE>\n\n", p,
+    		"<Center><i>Thank you for shopping at BadStore.net!</i></Center>";
 		}
 
-	### Close statement handles ###
-	$sth->finish;
+    	### Close statement handles ###
+    	$sth->finish;
 
-	### Disconnect from the databases ###
-	$dbh->disconnect;
+    	### Disconnect from the databases ###
+    	$dbh->disconnect;
 	}
 	print end_page();
 }
@@ -880,9 +879,9 @@ sub supplierportal
 		or die "Cannot connect: " . $DBI::errstr;
 
 	### Prepare, Evaluate and Execute SQL Query ###
-	my $sth = $dbh->prepare("SELECT * FROM userdb WHERE email='$email' AND passwd='$passwd' ");
+	my $sth = $dbh->prepare("SELECT * FROM userdb WHERE email=? AND passwd=? ");
 	eval {
-	     	$sth->execute();
+	     	$sth->execute($email,$passwd);
 		1;
 	} or do {
 		print "Location: /cgi-bin/badstore.cgi?action=supplierlogin\n\n";
@@ -983,9 +982,9 @@ sub cartview
          print p("Cart Contains: $items items at $price. The following items are in your cart:");
 
 		### Prepare and Execute SQL Query ###
-		my $sth = $dbh->prepare( "SELECT itemnum, sdesc, ldesc, price FROM itemdb WHERE itemnum IN ($cartitems)")
+		my $sth = $dbh->prepare( "SELECT itemnum, sdesc, ldesc, price FROM itemdb WHERE itemnum IN (?)")
            		or die "Couldn't prepare statement: " . $dbh->errstr;
-     		$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+     		$sth->execute($cartitems) or die "Couldn't execute SQL statement: " . $sth->errstr;
      		if ($sth->rows == 0) {
            		die "Item number not found: " . $sth->errstr;
      		} else {
@@ -998,11 +997,11 @@ sub cartview
 			}
 		print "</table>\n\n", p, "<Center>", submit('Place Order'), "   ", reset(), "</Center>", end_form;
 		}
-	### Close statement handles ###
-	$sth->finish;
+    	### Close statement handles ###
+    	$sth->finish;
 
-	### Disconnect from the databases ###
-	$dbh->disconnect;
+    	### Disconnect from the databases ###
+    	$dbh->disconnect;
 	}
 	print end_page();
 }
@@ -1191,33 +1190,35 @@ sub moduser
 	if ($aquery eq 'Reset User Password') {
 		print start_page('BadStore.net - Reset Password for User');
 		### Prepare and Execute SQL Query ###
-		my $sth=$dbh->prepare("UPDATE userdb SET passwd = '$encpasswd' WHERE email='$email'")
+		my $sth=$dbh->prepare("UPDATE userdb SET passwd = ? WHERE email=?")
 			or die "Could not update password: ".$dbh->errstr;
-		$sth->execute() or die "Couldn't execute SQL statement: ".$sth->errstr;
-
+		$sth->execute($encpasswd,$email) or die "Couldn't execute SQL statement: ".$sth->errstr;
+		$sth->finish;
 		print h2('The password for user:  ', $email,p, ' ...has been reset to: ',$newpasswd),
 
 	}elsif ($aquery eq 'Add User'){
 		print start_page('BadStore.net - Add User');
-		$dbh->do("INSERT INTO userdb (email, passwd, pwdhint, fullname, role) VALUES ('$email','$encpasswd','$pwdhint', '$fullname', '$role')")
+		$sth=$dbh->prepare("INSERT INTO userdb (email, passwd, pwdhint, fullname, role) VALUES (?,?,?, ?, ?)")
 			or die "Couldn't prepare SQL statement for Registration: " . $dbh->errstr;
+		$sth->execute($email,$encpasswd,$pwdhint,$fullname,$role) or die "Couldn't execute SQL statement: ".$sth->errstr;
+		$sth->finish;
 		print h2("User:  ",$fullname," has been added.");
 
 	}elsif ($aquery eq 'Delete User'){
 		print start_page('BadStore.net - Delete User');
-		$dbh->do("DELETE FROM userdb WHERE email='$email'")
+		my $sth=$dbh->prepare("DELETE FROM userdb WHERE email=?")
 			or die "Couldn't prepare SQL statement for Registration: " . $dbh->errstr;
+		$sth->execute($email) or die "Couldn't execute SQL statement: ".$sth->errstr;
+		$sth->finish;
 		print h2("User:  ",$email," has been deleted.");
 
 	### Change Account Information ###
 	}elsif ($aquery eq 'Change Account'){
 		print start_page('BadStore.net - Update User Information');
-		$dbh->do("UPDATE userdb SET fullname='$fullname' WHERE email='$email'")
+		my $sth=$dbh->prepare("UPDATE userdb SET fullname=?, passwd=?, email=? WHERE email=?")
 			or die "Couldn't prepare SQL statement: " .$dbh->errstr;
-		$dbh->do("UPDATE userdb SET passwd='$vencpasswd' WHERE email='$email'")
-			or die "Couldn't prepare SQL statement: " .$dbh->errstr;
-		$dbh->do("UPDATE userdb SET email='$newemail' WHERE email='$email'")
-			or die "Couldn't prepare SQL statement: " .$dbh->errstr;
+		$sth->execute($fullname, $vencpasswd, $newemail, $email) or die "Couldn't execute SQL statement: ".$sth->errstr;
+		$sth->finish;
 		print h2(" Account Information for: "),
 		" Full Name: ",$fullname,p," Email: ",$newemail,p," Password: ",$vnewpasswd,p,
 		h3(" Has been updated!");
@@ -1244,6 +1245,7 @@ sub authuser
 	chomp($pwdhint);
 	chomp($fullname);
 	$passwd=md5_hex($passwd);
+	my $role='U';
 
 	### Connect to the SQL Database ###
 	my $dbh = DBI->connect("DBI:mysql:database=badstoredb;host=localhost", "root", "secret",{'RaiseError' => 1})
@@ -1253,9 +1255,9 @@ sub authuser
 	if ($query->url_param('action') eq 'login') {
 
 		### Prepare and Execute SQL Query to Verify Credentials ###
-		my $sth = $dbh->prepare("SELECT * FROM userdb WHERE email='$email' AND passwd='$passwd'")
+		my $sth = $dbh->prepare("SELECT * FROM userdb WHERE email=? AND passwd=?")
       		or die "Couldn't prepare statement: " . $dbh->errstr;
-     		$sth->execute() or die "Couldn't execute SQL statement: " . $sth->errstr;
+     		$sth->execute($email,$passwd) or die "Couldn't execute SQL statement: " . $sth->errstr;
 
 		if ($sth->rows == 0) {
 			&printheaders;
@@ -1278,8 +1280,10 @@ sub authuser
 
 		### Register for a new account as a normal user ###
 		### Add ordered items to Order Database ###
-		$dbh->do("INSERT INTO userdb (email, passwd, pwdhint, fullname, role) VALUES ('$email', '$passwd','$pwdhint', '$fullname', 'U')")
+		my $sth=$dbh->prepare("INSERT INTO userdb (email, passwd, pwdhint, fullname, role) VALUES (?, ?, ?, ?, 'U')")
 			or die "Couldn't prepare SQL statement for Registration: " . $dbh->errstr;
+		$sth->execute($email,$passwd,$pwdhint,$fullname) or die "Couldn't execute SQL statement: " . $sth->errstr;
+		$sth->finish;
 	}
 
 	### Set SSO Cookie ###
