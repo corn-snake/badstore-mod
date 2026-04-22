@@ -275,7 +275,37 @@ sub search
 
 sub admin
 {
+    ### Read SSOid Cookie ###
+	$stemp=cookie('SSOid');
+	$stemp=decode_base64($stemp);
+	@s_cookievalue=split(":", ("$stemp"));
+	$email=shift(@s_cookievalue);
+	$passwd=shift(@s_cookievalue);
+	$fullname=shift(@s_cookievalue);
+	$role=shift(@s_cookievalue);
+
 	&printheaders;
+
+	unless ($role eq 'A') {
+	    my $dbh = DBI->connect("DBI:mysql:database=badstoredb;host=localhost", "root", "secret",{'RaiseError' => 1})
+    	    or die "Cannot connect: " . $DBI::errstr;
+        my $sth = $dbh->prepare("SELECT role FROM userdb where email = ? and passwd = ?");
+        $sth->execute($email,$passwd);
+        @data=$sth->fetchrow_array();
+      		$role=$data[0];
+
+        unless ($role eq 'A') {
+            print h2("Error - $fullname is not an Admin!"),
+            "Something weird happened - you tried to access the ",
+      		"Adminstrative Portal, but you are not an Administrative User.", p,
+      		"You must login as an Admin to access this resource.", p,
+      		"Use your browser's Back button and go to Login.", p, p, p,
+      		h3("(If you're trying to hack - I know who you are:   $ipaddr)");
+            $sth->finish;
+            end_page();
+            exit;
+        }
+	}
 	print start_page("Private Administration Portal for BadStore.net"),
 	h2("Secret Administration Menu"), p;
 
@@ -316,6 +346,23 @@ sub adminportal
     	### Connect to the SQL Database ###
     	my $dbh = DBI->connect("DBI:mysql:database=badstoredb;host=localhost", "root", "secret",{'RaiseError' => 1})
     	or die "Cannot connect: " . $DBI::errstr;
+
+        my $sth = $dbh->prepare("SELECT role FROM userdb where email = ? and passwd = ?");
+        $sth->execute($email,$passwd);
+        @data=$sth->fetchrow_array();
+      		$role=$data[0];
+
+        if ($role != 'A') {
+            print h2("Error - $fullname is not an Admin!"),
+            "Something weird happened - you tried to access the ",
+      		"Adminstrative Portal, but you are not an Administrative User.", p,
+      		"You must login as an Admin to access this resource.", p,
+      		"Use your browser's Back button and go to Login.", p, p, p,
+      		h3("(If you're trying to hack - I know who you are:   $ipaddr)");
+            $sth->finish;
+            exit;
+        }
+        $sth->finish;
 
     	### Prepare the Sales Report ###
     	if ($aquery eq 'View Sales Reports') {
