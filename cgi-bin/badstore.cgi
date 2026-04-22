@@ -502,14 +502,21 @@ sub doguestbook
 	$name=$query->param('name');
 	$email=$query->param('email');
 	$comments=$query->param('comments');
+	chomp($name);
+	chomp($email);
 	chomp($comments);
-
-    &saveFormData(\%fields, $dataFile);
 
 	&printheaders;
 	print start_page("Welcome to the BadStore.net Guestbook");
+	print h1("Guestbook");
 
-    print h1("Guestbook");
+	unless (index($name . $email . $comments, "<") == -1) {
+         print "Malformed request." . end_page();
+         return;
+    }
+
+    &saveFormData(\%fields, $dataFile);
+
     &readFormData($dataFile);
 	print end_page();
 }
