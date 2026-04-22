@@ -34,6 +34,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use DBI;
 use CGI qw(:standard :html4);
 use Digest::MD5 qw(md5_hex);
+use String::Random qw(random_regex random_string);
 use MIME::Base64;
 
 ### Setup Global Variables ###
@@ -1144,7 +1145,7 @@ sub myaccount
 		start_form(-method=>'POST', -action=>'/cgi-bin/badstore.cgi?action=moduser'),
 		"<font face=Arial size=2> Please enter the email addess and password hint you chose when the account was created:</font>",p,
 		" Email Address:  ", textfield(-name=>'email', -size=>15),p,
-		" Password Hint - What's Your Favorite Color?:  ",popup_menu(-name=>'pwdhint',-values=>['green','blue','red','orange','purple','yellow']),p,
+		" Password Hint - What's Your Favorite Color?:  ",textfield(-name=>'pwdhint', -size=>15),p,
 		"<font face=Arial size=2><i> (The Password Hint was chosen when you registered for a new account as a security measure to help recover a forgotten password...)</i></font>",p,
 		submit(-name=>'DoMods',-value=>'Reset User Password'), end_form;
 
@@ -1184,7 +1185,8 @@ sub moduser
 	chomp($pwdhint);
 	chomp($fullname);
 	chomp($role);
-	$newpasswd="Welcome";
+	my $strgen = String::Random->new;
+	$newpasswd=$strgen->randpattern("CCcc!ccn");
 	$encpasswd=md5_hex($newpasswd);
 	$vencpasswd=md5_hex($vnewpasswd);
 	&printheaders;
@@ -1201,7 +1203,7 @@ sub moduser
 			or die "Could not update password: ".$dbh->errstr;
 		$sth->execute($encpasswd,$email) or die "Couldn't execute SQL statement: ".$sth->errstr;
 		$sth->finish;
-		print h2('The password for user:  ', $email,p, ' ...has been reset to: ',$newpasswd),
+		print h2('Password has been reset. Check your email if necessary.'), "(NOTIMPL, this is a placeholder.)"
 
 	}elsif ($aquery eq 'Add User'){
 		print start_page('BadStore.net - Add User');
